@@ -1,7 +1,9 @@
 package fr.kinsteen.argentic.ui
 
-import android.annotation.SuppressLint
+import android.Manifest
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -17,13 +19,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +49,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import fr.kinsteen.argentic.R
 import fr.kinsteen.argentic.data.Roll
 import fr.kinsteen.argentic.data.Rolls
@@ -56,11 +66,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-@SuppressLint("RestrictedApi")
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun  CameraCapture(
-    modifier: Modifier = Modifier
-) {
+fun  CameraCapture() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -104,6 +112,53 @@ fun  CameraCapture(
         else -> {
             3/4f
         }
+    }
+
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    val permissionGranted by remember { derivedStateOf { cameraPermissionState.status.isGranted }}
+    var showCameraDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = permissionGranted) {
+        showCameraDialog = !permissionGranted;
+    }
+
+    if (showCameraDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            confirmButton = {
+                if (cameraPermissionState.status.shouldShowRationale) {
+                    TextButton(
+                        onClick = {
+                            cameraPermissionState.launchPermissionRequest()
+                            Log.i("CameraScreen", permissionGranted.toString())
+                        }
+                    ) {
+                        Text("Confirm")
+                    }
+                } else {
+                    TextButton(
+                        onClick = {
+                            val settingsIntent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            settingsIntent.data = Uri.parse("package:" + context.packageName)
+                            context.startActivity(settingsIntent)
+                        }
+                    ) {
+                        Text("Go to settings")
+                    }
+                }
+            },
+            title = {
+                Text("Grant camera permission?")
+            },
+            text = {
+                Text(
+                    if (cameraPermissionState.status.shouldShowRationale)
+                        "This app is a camera app, so the camera permission is necessary for it to function."
+                    else
+                        "You have to enable the camera permission. Go to settings to enable it."
+                )
+            }
+        )
     }
 
     Column(

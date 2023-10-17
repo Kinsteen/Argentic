@@ -1,6 +1,5 @@
 package fr.kinsteen.argentic
 
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -27,13 +26,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
@@ -80,32 +78,28 @@ class MainActivity : ComponentActivity() {
             ArgenticTheme(darkTheme = darkMode) {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier) {
-                    MainContent(Modifier.fillMaxSize())
+                    MainContent()
                 }
             }
         }
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @ExperimentalPermissionsApi
 @Composable
-fun MainContent(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+fun MainContent() {
     var showNavigationBar by remember { mutableStateOf(true) }
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val permissionState = rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+        val permissionGranted by remember { derivedStateOf { permissionState.status.isGranted } }
         var showNotificationDialog by remember { mutableStateOf(false) }
 
-        LaunchedEffect(key1 = permissionState) {
-            if (!permissionState.status.isGranted) {
-                showNotificationDialog = true;
-            }
+        LaunchedEffect(key1 = permissionGranted) {
+            showNotificationDialog = !permissionGranted;
         }
 
         if (showNotificationDialog) {
@@ -159,7 +153,7 @@ fun MainContent(modifier: Modifier = Modifier) {
                 })
             }
         }
-    ) {contentPadding ->
+    ) { contentPadding ->
         NavHost(
             navController = navController,
             startDestination = "Camera",

@@ -4,11 +4,8 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,8 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,16 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import fr.kinsteen.argentic.AlarmScheduler
 import fr.kinsteen.argentic.data.Roll
 import fr.kinsteen.argentic.data.Rolls
-import fr.kinsteen.argentic.dataStore
-import fr.kinsteen.argentic.getDarkMode
 import fr.kinsteen.argentic.rollsStore
 import fr.kinsteen.argentic.ui.theme.ArgenticTheme
+import fr.kinsteen.argentic.utils.DataStoreUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,7 +61,7 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
 
     val rolls by context.rollsStore.data.collectAsState(Rolls.getDefaultInstance().toBuilder().addRoll(
         Roll.newBuilder().setName("Roll - 1").setMax(30)))
-    val selectedRoll by getRoll(context = context).collectAsState(initial = 0)
+    val selectedRoll by DataStoreUtils(context).selectedRoll.collectAsState(initial = 0)
 
     val cw = ContextWrapper(context)
     val directory = cw.getDir("imageDir", Context.MODE_PRIVATE)
@@ -81,8 +72,6 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
 
     var showDeleteRoll by remember { mutableStateOf(false) }
     var rollToDelete by remember { mutableIntStateOf(0) }
-
-    val darkMode by getDarkMode(context).collectAsState(initial = true)
 
     Box {
         Column(
@@ -222,10 +211,7 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
                     showDeleteRoll = false
                     CoroutineScope(Dispatchers.IO).launch {
                         if (selectedRoll > rolls.rollCount - 2) {
-                            context.dataStore.edit { pref ->
-                                pref[intPreferencesKey("selected_roll")] =
-                                    selectedRoll - 1
-                            }
+                            DataStoreUtils(context).saveSelectedRoll(selectedRoll - 1)
                         }
 
                         context.rollsStore.updateData { currentRolls ->

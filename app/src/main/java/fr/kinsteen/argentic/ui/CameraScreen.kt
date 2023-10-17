@@ -1,7 +1,6 @@
 package fr.kinsteen.argentic.ui
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
 import androidx.camera.core.CameraSelector
@@ -44,28 +43,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import fr.kinsteen.argentic.R
 import fr.kinsteen.argentic.data.Roll
 import fr.kinsteen.argentic.data.Rolls
-import fr.kinsteen.argentic.dataStore
 import fr.kinsteen.argentic.getCameraProvider
 import fr.kinsteen.argentic.rollsStore
 import fr.kinsteen.argentic.ui.theme.ArgenticTheme
+import fr.kinsteen.argentic.utils.DataStoreUtils
 import fr.kinsteen.argentic.utils.capture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-
-fun getRoll(context: Context): Flow<Int> {
-    return context.dataStore.data.map { pref ->
-        pref[intPreferencesKey("selected_roll")] ?: 0
-    }
-}
 
 @SuppressLint("RestrictedApi")
 @Composable
@@ -92,14 +81,13 @@ fun  CameraCapture(
     }
 
     val rolls by context.rollsStore.data.collectAsState(initial = Rolls.getDefaultInstance().toBuilder().addRoll(Roll.getDefaultInstance()).build())
-    val selectedRoll by getRoll(context = context).collectAsState(initial = 0)
+    val dataStoreUtils = DataStoreUtils(context = context)
+    val selectedRoll by dataStoreUtils.selectedRoll.collectAsState(initial = 0)
 
     // Fail safe is something is wrong with the roll selection
     runBlocking {
         if (selectedRoll > rolls.rollCount - 1) {
-            context.dataStore.edit { pref ->
-                pref[intPreferencesKey("selected_roll")] = 0
-            }
+            dataStoreUtils.saveSelectedRoll(0)
         }
     }
 

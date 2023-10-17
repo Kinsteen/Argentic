@@ -1,6 +1,5 @@
 package fr.kinsteen.argentic.ui
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.wrapContentSize
@@ -24,13 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import fr.kinsteen.argentic.R
 import fr.kinsteen.argentic.data.Roll
 import fr.kinsteen.argentic.data.Rolls
-import fr.kinsteen.argentic.dataStore
 import fr.kinsteen.argentic.rollsStore
+import fr.kinsteen.argentic.utils.DataStoreUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,12 +65,8 @@ fun ChooseRoll(
                         }
                     },
                     onClick = {
-                        val rollSelected = intPreferencesKey("selected_roll")
                         CoroutineScope(Dispatchers.IO).launch {
-                            context.dataStore.edit { pref ->
-                                pref[rollSelected] = i
-                                Log.i("Preferences", "edited pref: " + pref)
-                            }
+                            DataStoreUtils(context).saveSelectedRoll(i)
                         }
                     })
             }

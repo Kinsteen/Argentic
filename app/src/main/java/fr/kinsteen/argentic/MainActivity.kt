@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -39,8 +38,6 @@ import androidx.core.view.WindowCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -56,17 +53,10 @@ import fr.kinsteen.argentic.ui.CameraCapture
 import fr.kinsteen.argentic.ui.Settings
 import fr.kinsteen.argentic.ui.Unroll
 import fr.kinsteen.argentic.ui.theme.ArgenticTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import fr.kinsteen.argentic.utils.DataStoreUtils
 
 val Context.rollsStore: DataStore<Rolls> by dataStore(fileName = "rolls.db", serializer = RollsSerializer)
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore("settings")
-
-fun getDarkMode(context: Context): Flow<Boolean> {
-    return context.dataStore.data.map { pref ->
-        pref[booleanPreferencesKey("dark_mode")] ?: true
-    }
-}
 
 @ExperimentalPermissionsApi
 class MainActivity : ComponentActivity() {
@@ -86,7 +76,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            val darkMode by getDarkMode(this).collectAsState(initial = true)
+            val darkMode by DataStoreUtils(this).darkMode.collectAsState(initial = true)
             ArgenticTheme(darkTheme = darkMode) {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier) {

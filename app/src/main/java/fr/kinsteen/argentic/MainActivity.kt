@@ -99,7 +99,7 @@ fun MainContent() {
         var showNotificationDialog by remember { mutableStateOf(false) }
 
         LaunchedEffect(key1 = permissionGranted) {
-            showNotificationDialog = !permissionGranted;
+            showNotificationDialog = !permissionGranted
         }
 
         if (showNotificationDialog) {
@@ -165,13 +165,13 @@ fun MainContent() {
                 enterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
                 exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
             ) {
-                showNavigationBar = true;
+                showNavigationBar = true
                 CameraCapture()
             }
             composable("Darkroom",
                 enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
                 exitTransition = { slideOutHorizontally(targetOffsetX = { it }) },) {
-                showNavigationBar = true;
+                showNavigationBar = true
                 Unroll(
                     modifier = Modifier,
                     goToSettings = {
@@ -181,7 +181,7 @@ fun MainContent() {
                 )
             }
             composable("Settings") {
-                showNavigationBar = false;
+                showNavigationBar = false
                 Settings(onBack = {
                     navController.popBackStack()
                 })

@@ -119,7 +119,7 @@ fun  CameraCapture() {
     var showCameraDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = permissionGranted) {
-        showCameraDialog = !permissionGranted;
+        showCameraDialog = !permissionGranted
     }
 
     if (showCameraDialog) {
@@ -240,7 +240,7 @@ fun  CameraCapture() {
 
     LaunchedEffect(previewUseCase, cameraSelectorId) {
         val cameraProvider = context.getCameraProvider()
-        val cameraSelector = CameraSelector.Builder().requireLensFacing(cameraSelectorId).build();
+        val cameraSelector = CameraSelector.Builder().requireLensFacing(cameraSelectorId).build()
         try {
             // Must unbind the use-cases before rebinding them.
             cameraProvider.unbindAll()

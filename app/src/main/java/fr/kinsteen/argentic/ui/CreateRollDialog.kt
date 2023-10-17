@@ -73,7 +73,7 @@ fun CreateRollDialog(onDismissRequest: () -> Unit, onConfirm: (name: String, num
                         if (rollName.isNotEmpty() && rollNumber.toIntOrNull() != null) {
                             onConfirm(rollName, rollNumber)
                         } else {
-                            showError = true;
+                            showError = true
                         }
                     }) {
                     Text("Confirm")

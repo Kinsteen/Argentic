@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "fr.kinsteen.argentic.data";
+option java_multiple_files = true;
+
+message Rolls {
+  repeated Roll roll = 1;
+}
+
+message Roll {
+  string name = 1;
+  uint32 max = 2;
+  uint64 developedTime = 3;
+  repeated Photo photo = 4;
+}
+
+message Photo {
+  string name = 1;
+}

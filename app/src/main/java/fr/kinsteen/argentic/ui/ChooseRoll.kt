@@ -9,6 +9,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,7 +71,7 @@ fun ChooseRoll(
                         }
                     })
             }
-            Divider()
+            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text("New roll") },
                 onClick = {

@@ -13,18 +13,18 @@ fun ConfirmDeleteRoll(rollName: String, onDismissRequest: () -> Unit, onConfirma
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(onClick = onConfirmation) {
-                Text("Confirm", color = MaterialTheme.colorScheme.error)
+                Text("Delete", color = MaterialTheme.colorScheme.error)
             }
         },
         title = {
             Text("Delete roll?")
         },
         text = {
-            Text("Do you confirm the deletion of \"$rollName\", and every photo in the roll?")
+            Text("Every photo in \"$rollName\" will be permanently lost.")
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("Dismiss")
+                Text("Cancel")
             }
         }
     )

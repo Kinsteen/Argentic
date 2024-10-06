@@ -46,10 +46,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
@@ -66,17 +69,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+@ExperimentalPermissionsApi
+@Composable
+fun rememberPermissionStateSafe(permission: String, onPermissionResult: (Boolean) -> Unit = {}) = when {
+    LocalInspectionMode.current -> remember {
+        object : PermissionState {
+            override val permission = permission
+            override val status = PermissionStatus.Granted
+            override fun launchPermissionRequest() = Unit
+        }
+    }
+    else -> rememberPermissionState(permission, onPermissionResult)
+}
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun  CameraCapture() {
+fun  CameraCapture(_showNewRollDialog: Boolean? = null) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     var cameraSelectorId by rememberSaveable { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     val flipRotateAnimation by animateFloatAsState(if (cameraSelectorId == CameraSelector.LENS_FACING_BACK) 0f else 360f,
         label = "flip rotate anim"
     )
     var showNewRollDialog by remember { mutableStateOf(false) }
+    if (_showNewRollDialog != null) {
+        showNewRollDialog = _showNewRollDialog
+    }
+
     var capturing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
@@ -97,6 +117,14 @@ fun  CameraCapture() {
         if (selectedRoll > rolls.rollCount - 1) {
             dataStoreUtils.saveSelectedRoll(0)
         }
+
+        if (rolls.rollCount == 0) {
+            context.rollsStore.updateData { currentRolls ->
+                currentRolls.toBuilder().addRoll(
+                    Roll.newBuilder().setName("New").setMax(10)
+                ).build()
+            }
+        }
     }
 
     val canCapture = ((rolls.getRoll(selectedRoll).photoCount < rolls.getRoll(selectedRoll).max)
@@ -114,7 +142,7 @@ fun  CameraCapture() {
         }
     }
 
-    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    val cameraPermissionState = rememberPermissionStateSafe(Manifest.permission.CAMERA)
     val permissionGranted by remember { derivedStateOf { cameraPermissionState.status.isGranted }}
     var showCameraDialog by remember { mutableStateOf(false) }
 
@@ -183,7 +211,9 @@ fun  CameraCapture() {
                 .fillMaxWidth()
         ) {
             IconButton(
-                modifier = Modifier.align(CenterStart).size(48.dp),
+                modifier = Modifier
+                    .align(CenterStart)
+                    .size(48.dp),
                 onClick = {
                     cameraSelectorId = if (cameraSelectorId == CameraSelector.LENS_FACING_BACK) {
                         CameraSelector.LENS_FACING_FRONT
@@ -196,7 +226,9 @@ fun  CameraCapture() {
                 Icon(
                     painterResource(id = R.drawable.flip_camera),
                     contentDescription = "Floating action button.",
-                    modifier = Modifier.rotate(flipRotateAnimation).size(48.dp)
+                    modifier = Modifier
+                        .rotate(flipRotateAnimation)
+                        .size(48.dp)
                 )
             }
             ShutterButton(
@@ -257,6 +289,6 @@ fun  CameraCapture() {
 @androidx.compose.ui.tooling.preview.Preview
 fun CameraCapturePreview() {
     ArgenticTheme(darkTheme = true) {
-        CameraCapture()
+        CameraCapture(_showNewRollDialog = true)
     }
 }

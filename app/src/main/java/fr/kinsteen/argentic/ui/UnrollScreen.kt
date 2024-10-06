@@ -1,5 +1,6 @@
 package fr.kinsteen.argentic.ui
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -32,6 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterEnd
 import androidx.compose.ui.Alignment.Companion.End
 import androidx.compose.ui.Modifier
@@ -41,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import fr.kinsteen.argentic.AlarmScheduler
 import fr.kinsteen.argentic.data.Roll
 import fr.kinsteen.argentic.data.Rolls
+import fr.kinsteen.argentic.data.RollsOrBuilder
 import fr.kinsteen.argentic.rollsStore
 import fr.kinsteen.argentic.ui.theme.ArgenticTheme
 import fr.kinsteen.argentic.utils.DataStoreUtils
@@ -56,11 +60,12 @@ fun getEpochSeconds(): Long {
 }
 
 @Composable
-fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
+fun Unroll(modifier: Modifier, _rolls: RollsOrBuilder? = null, goToSettings: () -> Unit) {
     val context = LocalContext.current
 
-    val rolls by context.rollsStore.data.collectAsState(Rolls.getDefaultInstance().toBuilder().addRoll(
-        Roll.newBuilder().setName("Roll - 1").setMax(30)))
+    val dataRolls by context.rollsStore.data.collectAsState(Rolls.getDefaultInstance().toBuilder())
+    val rolls = _rolls ?: dataRolls
+
     val selectedRoll by DataStoreUtils(context).selectedRoll.collectAsState(initial = 0)
 
     val cw = ContextWrapper(context)
@@ -84,7 +89,9 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
                     style = MaterialTheme.typography.headlineLarge
                 )
 
-                IconButton(modifier = Modifier.align(CenterEnd).padding(end = 16.dp), onClick = goToSettings) {
+                IconButton(modifier = Modifier
+                    .align(CenterEnd)
+                    .padding(end = 16.dp), onClick = goToSettings) {
                     Icon(
                         modifier = Modifier.size(32.dp),
                         imageVector = Icons.Default.Settings,
@@ -114,8 +121,14 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
 
                         if (roll.developedTime != 0L) {
                             if (getEpochSeconds() >= roll.developedTime) {
-                                Column {
-                                    Text("This roll is now developed!")
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp, 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp, End),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "This roll is now developed!")
                                     Button(onClick = {
                                         roll.photoList.forEach { photo ->
                                             val contentValues = ContentValues()
@@ -153,10 +166,16 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
                                         Text(text = "Send photos to media")
                                     }
                                 }
-
                             } else {
-                                Button(onClick = { /*TODO*/ }, enabled = false) {
-                                    Text("This roll is being developed...")
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp, 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp, End),
+                                ) {
+                                    Button(onClick = { /*TODO*/ }, enabled = false) {
+                                        Text("This roll is being developed...")
+                                    }
                                 }
                             }
                         } else {
@@ -224,10 +243,20 @@ fun Unroll(modifier: Modifier, goToSettings: () -> Unit) {
     }
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 @Preview
 fun UnrollPreview() {
+    val context = LocalContext.current
+
+    val rolls by context.rollsStore.data.collectAsState(Rolls.getDefaultInstance().toBuilder()
+        .addRoll(Roll.newBuilder().setName("Roll - 1").setMax(60))
+        .addRoll(Roll.newBuilder().setName("Roll - 1").setMax(60).setDevelopedTime(50))
+        .addRoll(Roll.newBuilder().setName("Roll - 1").setMax(60).setDevelopedTime(9999999999999))
+        .build())
+
     ArgenticTheme(darkTheme = true) {
-        Unroll(modifier = Modifier.fillMaxSize()) {}
+        Unroll(modifier = Modifier.fillMaxSize(), _rolls = rolls) {
+        }
     }
 }
